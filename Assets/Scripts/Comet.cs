@@ -2,50 +2,37 @@ using UnityEngine;
 
 public class Comet : MonoBehaviour
 {
-    public CometData data;        
-    public Transform orbitCenter;
+    public float speed = 5f;                       // prędkość komety
+    public Vector2 moveDirection = Vector2.down;   // kierunek ruchu ustawienie tego w spawner
 
-    private float _angle;
+    private GameManager gameManager;
 
-    private void Start()
+    void Start()
     {
-        if (data == null)
-        {
-            Debug.LogWarning("Brak CometData na " + gameObject.name);
-            return;
-        }
+        gameManager = FindObjectOfType<GameManager>();
 
-        if (orbitCenter == null)
-        {
-            GameObject center = new GameObject("OrbitCenterAuto");
-            orbitCenter = center.transform;
-            orbitCenter.position = Vector3.zero;
-        }
+        moveDirection = moveDirection.normalized;
+    }
 
-        // startową pozycja
-        transform.position = orbitCenter.position + Vector3.right * data.orbitRadius;
+    void Update()
+    {
+        transform.position += (Vector3)moveDirection * speed * Time.deltaTime;
 
-        // kolor ze ScriptableObject
-        var sr = GetComponent<SpriteRenderer>();
-        if (sr != null)
+        // jeśli kometa przeleciała to usuwamy
+        if (transform.position.y < -10f)
         {
-            sr.color = data.tint;
+            Destroy(gameObject);
         }
     }
 
-    private void Update()
+    void OnTriggerEnter2D(Collider2D other)
     {
-        if (data == null || orbitCenter == null) return;
-
-        _angle += data.orbitSpeed * Time.deltaTime;          // rośnij kąt
-        float rad = _angle * Mathf.Deg2Rad;                  // na radiany
-
-        Vector3 offset = new Vector3(
-            Mathf.Cos(rad),
-            Mathf.Sin(rad),
-            0f
-        ) * data.orbitRadius;
-
-        transform.position = orbitCenter.position + offset;
+        if (other.CompareTag("Player"))
+        {
+            if (gameManager != null)
+            {
+                gameManager.GameOver();
+            }
+        }
     }
 }
